@@ -1,11 +1,10 @@
 // src/components/cart/CartLeft.jsx
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-  removeItemFromCart, 
-  incrementQuantity, 
-  decrementQuantity, 
-  toggleItemSelection, 
+import {
+  removeItemFromCartAsync,
+  updateCartItemQuantityAsync,
+  toggleItemSelection,
   selectAllItems,
   selectCartTotal,
   selectIsItemInStock,
@@ -24,11 +23,15 @@ const CartLeft = () => {
 
   const allItemsSelected = cartItems.length > 0 && cartItems.every(item => item.selected);
 
-  const handleRemoveSelected = () => {
+  const handleRemoveSelected = async () => {
     const selectedItems = cartItems.filter(item => item.selected);
-    selectedItems.forEach(item => {
-      dispatch(removeItemFromCart(item._id));
-    });
+    for (const item of selectedItems) {
+      try {
+        await dispatch(removeItemFromCartAsync(item.id)).unwrap();
+      } catch (error) {
+        console.error('Failed to remove item:', error);
+      }
+    }
   };
 
   const handleSelectAll = () => {
@@ -40,12 +43,12 @@ const CartLeft = () => {
       <div className=" flex justify-between max-sm:flex-col items-center mb-4">
         <h2 className="text-xl font-semibold text1 max-sm:text-[17px] text-start max-sm:w-full">Your Cart ({cartItems.length})</h2>
         <div className="flex gap-4 max-sm:gap-2 max-sm:justify-between max-sm:w-full">
-          <aside 
+          <aside
             className='flex items-center gap-2 cursor-pointer'
             onClick={handleSelectAll}
           >
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               className='h-5 w-5 cursor-pointer'
               checked={allItemsSelected}
               onChange={handleSelectAll}
@@ -78,7 +81,7 @@ const CartLeft = () => {
                       <input
                         type="checkbox"
                         checked={item.selected || false}
-                        onChange={() => dispatch(toggleItemSelection(item._id))}
+                        onChange={() => dispatch(toggleItemSelection(item.product_id || item._id))}
                         className="h-5 w-5 absolute"
                         />
                       <img src={item.image} alt={item.name} className="w-full h-auto max-md:h-32 max-sm:h-auto max-sm:w-full object-cover rounded" />
@@ -94,11 +97,19 @@ const CartLeft = () => {
                       <div className='flex gap-5 items-center'>
                         <p className="font-medium text-[#B8A38A] max-sm:text-[13px] max-[479px]:hidden">₹. {item.price.toFixed(2)}</p>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => dispatch(decrementQuantity(item._id))} className="text-red-500">
+                          <button onClick={() => {
+                            if (item.quantity > 1) {
+                              dispatch(updateCartItemQuantityAsync({ cartItemId: item.id, quantity: item.quantity - 1 }));
+                            }
+                          }} className="text-red-500">
                             <FaCircleMinus className='h-6 w-6 max-md:h-5 max-md:w-5' />
                           </button>
                           <span className='allCenter w-10 h-8 max-md:h-6 max-md:w-8 max-sm:h-6 max-sm:w-6 max-md:text-[16px] max-sm:text-[14px] mx-2 text-xl text-[#B8A38A] ring-1 ring-[#B8A38A] rounded-[5px]'>{item.quantity}</span>
-                          <button onClick={() => dispatch(incrementQuantity(item._id))} className="text-green-500 text-3xl">
+                          <button onClick={() => {
+                            if (item.quantity < item.available) {
+                              dispatch(updateCartItemQuantityAsync({ cartItemId: item.id, quantity: item.quantity + 1 }));
+                            }
+                          }} className="text-green-500 text-3xl">
                             <IoAddCircle className='max-md:h-6 max-md:w-6' />
                           </button>
                         </div>
@@ -116,8 +127,8 @@ const CartLeft = () => {
                   <div className="w-2/6 max-sm:w-full relative">
                     <span className='flex flex-col max-sm:flex-row max-sm:mt-3 items-end justify-evenly max-sm:items-center max-sm:justify-between h-full'>
                       <p className="font-semibold max-sm:text-[14px]">₹. {(item.price * item.quantity).toFixed(2)}</p>
-                      <button 
-                        onClick={() => dispatch(removeItemFromCart(item._id))} 
+                      <button
+                        onClick={() => dispatch(removeItemFromCartAsync(item.id))}
                         className="p-1 text-red-500 hover:text-red-700 flex items-center gap-1"
                         >
                         <RiDeleteBin6Fill className='h-6 w-6 max-sm:h-4 max-sm:w-4' />
