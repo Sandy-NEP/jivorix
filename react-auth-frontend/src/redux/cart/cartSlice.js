@@ -193,9 +193,6 @@ export const selectIsItemInStock = (state, itemId) => {
   return item.quantity <= item.available;
 };
 
-// Export async thunks
-export { addItemToCartAsync, loadCartAsync, removeItemFromCartAsync, updateCartItemQuantityAsync };
-
 // Export regular actions
 export const {
   toggleItemSelection,

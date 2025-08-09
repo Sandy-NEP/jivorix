@@ -10,6 +10,7 @@ import Enter from './pages/enter/Enter';
 import Shop from './pages/Shop';
 import Cart from './pages/Cart';
 import CartInitializer from './components/cart/CartInitializer';
+import FavoritesInitializer from './components/favorite/FavoritesInitializer';
 import FavoriteList from './pages/FavoriteList';
 import ProductDetail from './pages/ProductDetail';
 import MenuButton from './components/navbar/MenuButton';
@@ -124,6 +125,7 @@ function App() {
     <Router>
       <ScrollToTop />
       <CartInitializer />
+      <FavoritesInitializer />
       <AppContent />
     </Router>
   );

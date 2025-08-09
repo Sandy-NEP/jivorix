@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setRandomHomeProducts } from '../../../redux/home/homeSlice'
 import { useNavigate } from 'react-router-dom';
 import { setSelectedItem } from '../../../redux/detail/detailSlice';
-import { addToFavorites, removeFromFavorites } from '../../../redux/favorite/favoriteSlice';
+import { addToFavoritesAsync, removeFromFavoritesAsync } from '../../../redux/favorite/favoriteSlice';
 
 const HomeProduct = () => {
   const dispatch = useDispatch();
@@ -25,19 +25,19 @@ const HomeProduct = () => {
   }, [dispatch]);
 
   // Filter items based on active gender
-  const filteredItems = activeGender 
+  const filteredItems = activeGender
     ? homeProducts.filter(item => item.gender === activeGender)
     : homeProducts;
-  
+
   const isItemInFavorites = (itemId) => {
     return favoriteItems.some(item => item._id === itemId);
   };
 
   const handleFavoriteToggle = (item) => {
     if (isItemInFavorites(item._id)) {
-      dispatch(removeFromFavorites(item._id));
+      dispatch(removeFromFavoritesAsync(item._id));
     } else {
-      dispatch(addToFavorites(item));
+      dispatch(addToFavoritesAsync(item));
     }
   };
 
@@ -56,7 +56,7 @@ const HomeProduct = () => {
         {filteredItems.map((item) => (
             <div key={item._id} onClick={() => handleItemClick(item)} className='flex flex-col gap-[18px] max-md:gap-2 rounded-[10px] p-3 shadow2 bg-white hover:shadow-md transition-all duration-200 max-sm:w-full'>
               <div className='relative'>
-                <span 
+                <span
                   className="absolute top-2 right-2 cursor-pointer text-2xl select-none"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -91,7 +91,7 @@ const HomeProduct = () => {
                   {isItemInCart(item._id) && (
                     <FaCheckCircle className='text-green-400 text-[19px]' />
                   )}
-                </div>  
+                </div>
               </div>
             </div>
         ))}

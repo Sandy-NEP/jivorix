@@ -1,7 +1,7 @@
 import React from 'react';
 import { Star, ZoomIn, ZoomOut } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { addItemToCart } from '../../redux/cart/cartSlice';
+import { addItemToCartAsync } from '../../redux/cart/cartSlice';
 import { setSelectedSize, setIsZoomed } from '../../redux/detail/detailSlice';
 import { IoChatboxEllipses } from "react-icons/io5";
 import { IoMdHeartEmpty } from "react-icons/io";
@@ -12,7 +12,7 @@ export default function Detail() {
   const dispatch = useDispatch();
   const { selectedItem } = useSelector((state) => state.detail);
   const { selectedSize, isZoomed } = useSelector((state) => state.detail);
-  
+
   const sizes = ["S", "M", "L", "XL", "2XL"];
 
   const handleSizeSelect = (size) => {
@@ -23,19 +23,32 @@ export default function Detail() {
     dispatch(setIsZoomed(!isZoomed));
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!selectedItem) return;
-    
+
+    // Check if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user) {
+      alert('Please login to add items to cart');
+      return;
+    }
+
     const cartItem = {
       _id: selectedItem._id,
       name: selectedItem.name,
       image: selectedItem.image,
       desc: selectedItem.desc,
       price: parseFloat(selectedItem.sp.replace(',', '')),
-      available: selectedItem.available,
-      selectedSize
+      available: selectedItem.available
     };
-    dispatch(addItemToCart(cartItem));
+
+    try {
+      await dispatch(addItemToCartAsync({ item: cartItem, selectedSize })).unwrap();
+      // Success feedback could be added here
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      alert('Failed to add item to cart: ' + error);
+    }
   };
 
   if (!selectedItem) {
@@ -128,7 +141,7 @@ export default function Detail() {
           </div>
 
           <div className='mt-4'>
-            <button 
+            <button
               onClick={handleAddToCart}
               className="button1 w-full"
             >

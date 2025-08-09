@@ -8,7 +8,7 @@ import { applyCategoryFilter, goToCategoryPage, nextCategoryPage, prevCategoryPa
 import { addItemToCartAsync } from '../../redux/cart/cartSlice';
 import { items as allItems } from '../../assets/assets';
 import { FaHeart, FaStar, FaArrowLeft, FaArrowRight, FaCheckCircle } from 'react-icons/fa';
-import { addToFavorites, removeFromFavorites } from '../../redux/favorite/favoriteSlice';
+import { addToFavoritesAsync, removeFromFavoritesAsync } from '../../redux/favorite/favoriteSlice';
 import { setSelectedItem } from '../../redux/detail/detailSlice';
 
 const Items = () => {
@@ -108,12 +108,26 @@ const Items = () => {
     return favoriteItems.some(item => item._id === itemId);
   };
 
-  const handleFavoriteToggle = (e, item) => {
+  const handleFavoriteToggle = async (e, item) => {
     e.stopPropagation(); // Stop event bubbling
-    if (isItemInFavorites(item._id)) {
-      dispatch(removeFromFavorites(item._id));
-    } else {
-      dispatch(addToFavorites(item));
+
+    // Check if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user) {
+      alert('Please login to add items to favorites');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      if (isItemInFavorites(item._id)) {
+        await dispatch(removeFromFavoritesAsync(item._id)).unwrap();
+      } else {
+        await dispatch(addToFavoritesAsync(item)).unwrap();
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+      alert('Failed to update favorites: ' + error);
     }
   };
 

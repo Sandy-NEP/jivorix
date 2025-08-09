@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { removeFromFavorites, clearFavorites } from '../../redux/favorite/favoriteSlice';
+import { removeFromFavoritesAsync, clearFavoritesAsync } from '../../redux/favorite/favoriteSlice';
 import { FaStar } from 'react-icons/fa';
 import { RiDeleteBin6Fill } from "react-icons/ri";
 import { MdDeleteSweep } from "react-icons/md";
-import { addItemToCart } from '../../redux/cart/cartSlice';
+import { addItemToCartAsync } from '../../redux/cart/cartSlice';
 import { useNavigate } from 'react-router-dom';
 import { setSelectedItem } from '../../redux/detail/detailSlice';
 
@@ -14,18 +14,38 @@ const FavoriteItem = () => {
   const navigate = useNavigate();
   const { favoriteItems } = useSelector((state) => state.favorite);
 
-  const handleRemoveFavorite = (itemId) => {
-    dispatch(removeFromFavorites(itemId));
-  };
-
-  const handleClearFavorites = () => {
-    if (favoriteItems.length > 0) {
-      dispatch(clearFavorites());
+  const handleRemoveFavorite = async (itemId) => {
+    try {
+      await dispatch(removeFromFavoritesAsync(itemId)).unwrap();
+    } catch (error) {
+      console.error('Failed to remove from favorites:', error);
+      alert('Failed to remove from favorites: ' + error);
     }
   };
 
-  
-  const handleAddToCart = (item) => {
+  const handleClearFavorites = async () => {
+    if (favoriteItems.length > 0) {
+      try {
+        await dispatch(clearFavoritesAsync()).unwrap();
+      } catch (error) {
+        console.error('Failed to clear favorites:', error);
+        alert('Failed to clear favorites: ' + error);
+      }
+    }
+  };
+
+
+  const handleAddToCart = async (e, item) => {
+    e.stopPropagation(); // Stop event bubbling
+
+    // Check if user is logged in
+    const user = localStorage.getItem('user');
+    if (!user) {
+      alert('Please login to add items to cart');
+      navigate('/login');
+      return;
+    }
+
     // Prepare the item data to add to cart
     const cartItem = {
       _id: item._id,
@@ -35,7 +55,14 @@ const FavoriteItem = () => {
       price: parseFloat(item.sp.replace(',', '')), // Convert "1,099" to 1099
       available: item.available
     };
-    dispatch(addItemToCart(cartItem));
+
+    try {
+      await dispatch(addItemToCartAsync({ item: cartItem, selectedSize: 'M' })).unwrap();
+      // Success feedback could be added here
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      alert('Failed to add item to cart: ' + error);
+    }
   };
 
   const handleItemClick = (item) => {
@@ -48,7 +75,7 @@ const FavoriteItem = () => {
       <div className='flex items-center justify-between mb-10 max-md:mb-6 max-sm:mb-4'>
         <h1 className='text1 text-[32px] max-lg:text-[24px] max-sm:text-[16px] font-bold'>Your Favorite Items ({favoriteItems.length})</h1>
         {favoriteItems.length > 0 && (
-          <button 
+          <button
             onClick={handleClearFavorites}
             className="py-2 px-4 max-sm:px-1 bg-[#EF4444] text-white text-[16px] max-sm:text-[12px] font-medium hover:bg-[#fff] hover:text-[#EF4444] hover:ease-in-out duration-500 border border-[#EF4444] rounded-[5px] flex items-center gap-2"
           >
@@ -57,7 +84,7 @@ const FavoriteItem = () => {
           </button>
         )}
       </div>
-      
+
       {favoriteItems.length === 0 ? (
         <div className='flex flex-col justify-center items-center gap-7'>
           <p className='text3 text-[18px] text-center'>Your favorites list is empty</p>
@@ -72,7 +99,7 @@ const FavoriteItem = () => {
           {favoriteItems.map((item, index) => (
             <div key={index} onClick={() => handleItemClick(item)} className='flex flex-col gap-[18px] max-md:gap-2 rounded-[10px] p-3 shadow2 bg-white hover:shadow-md transition-all duration-200 max-sm:w-full cursor-pointer'>
               <div className='relative'>
-                <span 
+                <span
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRemoveFavorite(item._id);
@@ -102,9 +129,9 @@ const FavoriteItem = () => {
                   </ul>
                 </div>
                 <div className='text-[15px] text3 flex gap-[8px] max-md:text-[12px]'>Available items: <p className='font-semibold text1'>{item.available}</p></div>
-              <button 
+              <button
                 className='productbtn w-full mt-2'
-                onClick={() => handleAddToCart(item)}
+                onClick={(e) => handleAddToCart(e, item)}
               >
                 Add to Cart
               </button>
